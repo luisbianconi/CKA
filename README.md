@@ -198,57 +198,83 @@ k get deployment deploy-1
 
 ## 19. Altere a image do deployment para nginx:alpine.
 **R:**
-
+```sh
+k set image deployment/deploy-1 nginx=nginx:alpine
+```
 ---
 
 ## 20. Consulte todos os ReplicaSet criados por esse deployment.
 **R:**
-
+```sh
+k get rs -l app=deploy-1
+```
 ---
 
 ## 21. Altere a image do deployment para nginx:latest e adicione um motivo de causa.
 **R:**
-
+```sh
+kubectl set image deployment/deploy-1 nginx=nginx:latest
+kubectl annotate deployment deploy-1 kubernetes.io/change-cause="Task 21 CKA Exam"
+```
 ---
 
 ## 22. Agora volte esse deployment para "revison 1".
 **R:**
-
+```sh
+k rollout undo deployment/deploy-1 --to-revision 1
+```
 ---
 
 ## 23. Verifique qual imagem o deployment está utilizando e grave em /tmp/deploy-image.
 **R:**
-
+```sh
+k get deployment deploy-1 -o yaml | grep image: > /tmp/deploy-image
+```
 ---
 
 ## 24. Escale esse deployment para 5 replicas utilizando o kubectl.
 **R:**
-
+```sh
+k scale deployment/deploy-1 --replicas 5
+```
 ---
 
 ## 25. Escale esse deployment para 2 replicas utilizando o kubectl edit.
 **R:**
-
+```sh
+k edit deployment deploy-1
+replicas: 2
+```
 ---
 
 ## 26. Pause o deployment.
 **R:**
-
+```sh
+k rollout pause deployment/deploy-1
+```
 ---
 
 ## 27. Altere a image do deployment para nginx:alpine.
 **R:**
-
+```sh
+k set image deployment/deploy-1 nginx=nginx:alpine
+k get pods -o yaml | grep image: 
+```
 ---
 
 ## 28. Agora tire o pause deste deployment.
 **R:**
-
+```sh
+k rollout resume deployment/deploy-1 
+k get pods -o yaml | grep image:  
+```
 ---
 
 ## 29. Verifique qual imagem o deployment está utilizando e grave em /tmp/deploy-image-pause.
 **R:**
-
+```sh
+kubectl describe deployment deploy-1 | grep Image: > /tmp/deploy-image
+```
 ---
 
 ## 30. Crie um Deployment com as seguintes características utilizando um yaml:
@@ -264,12 +290,46 @@ k get deployment deploy-1
 	- image: busybox
 	- command: sleep 3600
 **R:**
-
+```sh
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: deploy-30
+  name: deploy-30
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deploy-30
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: deploy-30
+    spec:
+      containers:
+      - image: nginx
+        name: web
+        ports:
+        - containerPort: 80
+        env:
+          - name: tier
+            value: "web"
+          - name: environment
+            value: "prod"
+      - image: busybox
+        name: sleep
+        command: ["sleep"]
+        args: ["3600"]
+```
 ---
 
 ## 31. Delete todos deployments no namespace default
 **R:**
-
+```sh
+k delete deployments -n default --all 
+```
 ---
 
 ## 32. Criar um ConfigMap com as seguintes características utilizando um yaml:
@@ -277,17 +337,27 @@ k get deployment deploy-1
 - **IP:** 10.0.0.1
 - **SERVER:** nginx
 **R:**
-
+```sh
+k create configmap env-configs \
+--from-literal=IP=10.0.0.1 \
+--from-literal=SERVER=nginx \
+-o yaml --dry-run=client > env-configs.yaml
+k apply -f env-configs.yaml
+```
 ---
 
 ## 33. Verifique o ConfigMap criado.
 **R:**
-
+```sh
+k get configmap env-configs -o yaml
+```
 ---
 
 ## 34. Obtenha todos os dados do ConfigMap criado para /tmp/configmap.
 **R:**
-
+```sh
+k get configmap env-configs -o yaml > /tmp/configmap
+```
 ---
 
 ## 35. Crie um ConfigMap com as seguintes características utilizando o kubectl:
@@ -295,7 +365,11 @@ k get deployment deploy-1
 - **tier:** web
 - **server:** homolog
 **R:**
-
+```sh
+k create configmap env-configs-kubectl \
+--from-literal=tier=web \
+--from-literal=server=homolog \
+```
 ---
 
 ## 36. Crie um POD com as seguintes características:
@@ -304,37 +378,75 @@ k get deployment deploy-1
 - **port:** 80
 Agora monte o configMap env-configs-kubectl como volume em /data
 **R:**
+```sh
+kubectl run ex-cm-pod1 --image=nginx --port=80 --dry-run=client -o yaml > pod36.yaml
 
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: ex-cm-pod1
+  name: ex-cm-pod1
+spec:
+  containers:
+  - image: nginx
+    name: ex-cm-pod1
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: cm-volume
+      mountPath: /data
+  volumes:
+  - name: cm-volume
+    configMap:
+      name: env-configs-kubectl
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+```
 ---
 
 ## 37. Altere o pod ex-cm-pod1, agora montando somente o item tier agora com o nome ambiente.conf em /data.
 **R:**
+```sh
 
+```
 ---
 
 ## 38. Altere o pod ex-cm-pod1, remove todos os volumes e exporte o configMap completo como variáveis de ambiente. Após isso execute o comando ENV.
 **R:**
+```sh
 
+```
 ---
 
 ## 39. Altere o pod ex-cm-pod1, agora exporte somente o valor do item server para variável ENVIRONMENT. Após isso execute o comando ENV.
 **R:**
+```sh
 
+```
 ---
 
 ## 40. Altere o configMap env-configs-kubectl mude o valor de server para prod e faça essa alteração refletir no pod criado anteriormente.
 **R:**
+```sh
 
+```
 ---
 
 ## 41. Altere o configMap env-configs-kubectl para imutável.
 **R:**
+```sh
 
+```
 ---
 
 ## 42. Delete todos os pods e configmaps criados anteriormente.
 **R:**
-
+```sh
+k delete pods --all
+k delete configmaps --all (kube-root-ca.crt vai ser deletado, mas para testes não tem problema)
+```
 ---
 
 ## 43. Crie uma Secret com as seguintes características utilizando um yaml:
@@ -342,17 +454,28 @@ Agora monte o configMap env-configs-kubectl como volume em /data
 - **user:** superadmin
 - **pass:** minhasenhasupersegura
 **R:**
+```sh
+k create secret generic user-secret \
+--from-literal=user=superadmin \
+--from-literal=pass=minhasenhasupersegura \
+-o yaml --dry-run=client > user-secret.yaml
 
+k apply -f user-secret.yaml
+```
 ---
 
 ## 44. Verifique a Secret criada.
 **R:**
-
+```sh
+k get secrets user-secret -o yaml 
+```
 ---
 
 ## 45. Obtenha os dados da Secret criada para /tmp/secret e descriptografe seus valores em /tmp/decrypt
 **R:**
-
+```sh
+k get secrets user-secret -o yaml > /tmp/secret
+```
 ---
 
 ## 46. Crie uma Secret com as seguintes características utilizando o kubectl:
@@ -360,7 +483,9 @@ Agora monte o configMap env-configs-kubectl como volume em /data
 - **user:** newuser
 - **pass:** agoraeseguraem
 **R:**
+```sh
 
+```
 ---
 
 ## 47. Crie um POD com as seguintes características:
@@ -369,30 +494,42 @@ Agora monte o configMap env-configs-kubectl como volume em /data
 - **port:** 80
 Agora monte a secret user-secret-kubectl como volume em /secret
 **R:**
+```sh
 
+```
 ---
 
 ## 48. Altere o pod ex-secret-pod1, montando somente o item user agora com o nome user.conf em /secret
 **R:**
+```sh
 
+```
 ---
 
 ## 49. Altere o pod ex-secret-pod1, remove todos os volumes e exporte a secret completa como variáveis de ambiente, após isso execute o comando ENV
 **R:**
+```sh
 
+```
 ---
 
 ## 50. Altere o pod ex-secret-pod1, agora exporte somente o valor do item pass para variável SENHA, após isso execute o comando ENV
 **R:**
+```sh
 
+```
 ---
 
 ## 51. Altere a secret user-secret-kubectl e mude o valor de pass para minhanovasenhasegura e faça essa alteração refletir no pod criado anteriormente
 **R:**
+```sh
 
+```
 ---
 
 ## 52. Altere a secret user-secret-kubectl para imutável
 **R:**
+```sh
 
+```
 ---
